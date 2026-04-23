@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agnix AI - Your Intelligent Chat Assistant</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body>
+    <!-- Auth Section (Login/Register) -->
+    <div id="authSection" class="auth-container">
+        <div class="auth-card">
+            <div class="auth-header">
+                <i class="fas fa-robot"></i>
+                <h1>Agnix AI</h1>
+                <p>Your Intelligent Chat Companion</p>
+            </div>
+            <div class="auth-tabs">
+                <button class="tab-btn active" onclick="showTab('login')">Login</button>
+                <button class="tab-btn" onclick="showTab('register')">Register</button>
+            </div>
+            <div id="loginTab" class="auth-form active">
+                <input type="text" id="loginUsername" placeholder="Username" class="auth-input">
+                <input type="password" id="loginPassword" placeholder="Password" class="auth-input">
+                <button onclick="login()" class="auth-btn">Login <i class="fas fa-arrow-right"></i></button>
+            </div>
+            <div id="registerTab" class="auth-form">
+                <input type="text" id="regUsername" placeholder="Username" class="auth-input">
+                <input type="email" id="regEmail" placeholder="Email" class="auth-input">
+                <input type="password" id="regPassword" placeholder="Password" class="auth-input">
+                <button onclick="register()" class="auth-btn">Register <i class="fas fa-user-plus"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main App Section -->
+    <div id="mainApp" class="main-container" style="display: none;">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <i class="fas fa-robot"></i>
+                <h2>Agnix AI</h2>
+            </div>
+            
+            <button class="new-chat-btn" onclick="createNewChat()">
+                <i class="fas fa-plus"></i> New Chat
+            </button>
+            
+            <div class="chat-history">
+                <h3><i class="fas fa-history"></i> Recent Chats</h3>
+                <ul id="historyList"></ul>
+            </div>
+            
+            <!-- Profile Section inside Sidebar -->
+            <div class="profile-section">
+                <div class="profile-info">
+                    <div class="profile-avatar">
+                        <i class="fas fa-user-circle"></i>
+                    </div>
+                    <div class="profile-details">
+                        <span id="profileUsername">User</span>
+                        <small>Online</small>
+                    </div>
+                </div>
+                <button onclick="logout()" class="logout-btn">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </button>
+            </div>
+        </div>
+
+        <!-- Chat Area -->
+        <div class="chat-area">
+            <div class="chat-header">
+                <h2 id="chatTitle">New Conversation</h2>
+                <div class="chat-status">
+                    <i class="fas fa-circle" style="color: #4ade80; font-size: 10px;"></i>
+                    <span>Connected</span>
+                </div>
+            </div>
+            
+            <div class="chat-messages" id="chatBox">
+                <div class="welcome-message">
+                    <i class="fas fa-robot"></i>
+                    <h3>Welcome to Agnix AI!</h3>
+                    <p>How can I help you today?</p>
+                </div>
+            </div>
+            
+            <div class="chat-input-container">
+                <div class="input-wrapper">
+                    <input type="text" id="messageInput" placeholder="Ask Agnix anything..." onkeypress="handleKeyPress(event)">
+                    <button id="sendBtn">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+                <div class="input-hint">
+                    <i class="fas fa-lightbulb"></i> Press Enter to send
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/script.js"></script>
+</body>
+</html>
