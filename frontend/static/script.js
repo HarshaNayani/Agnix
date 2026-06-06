@@ -250,7 +250,7 @@ function connectWebSocket() {
     }
 
     console.log("Connecting WebSocket for chat:", currentChatId);
-    socket = new WebSocket(`ws://127.0.0.1:8000/ws/${currentChatId}`);
+    socket = new WebSocket(`wss://agnix-backend.onrender.com/ws/${currentChatId}`);
     
     socket.onopen = function() {
         console.log("WebSocket connected successfully!");
