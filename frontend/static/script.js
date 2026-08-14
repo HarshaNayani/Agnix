@@ -1,11 +1,28 @@
 let token = localStorage.getItem("token");
 let socket = null;
 let currentChatId = null;
+let currentStreamDiv = null; // holds the assistant bubble being typed into
+const API_BASE = window.location.origin; // works on localhost AND when deployed live
+
+// If the server says our token is invalid/expired, clear it and go back to login
+function handleAuthFailure() {
+    localStorage.removeItem("token");
+    localStorage.removeItem("username");
+    alert("Your session expired. Please log in again.");
+    location.reload();
+}
 
 // Wait for DOM to fully load before running code
 document.addEventListener("DOMContentLoaded", function() {
     console.log("DOM loaded, initializing...");
-    
+
+    // Apply saved theme
+    applyTheme(localStorage.getItem("theme") || "light");
+    const themeBtn = document.getElementById("themeToggle");
+    if (themeBtn) {
+        themeBtn.addEventListener("click", toggleTheme);
+    }
+
     // Check auto login
     if (token) {
         // Hide auth section, show main app
@@ -45,6 +62,22 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 });
 
+// Dark / light theme
+function applyTheme(theme) {
+    document.documentElement.setAttribute("data-theme", theme);
+    const icon = document.querySelector("#themeToggle i");
+    if (icon) {
+        icon.className = theme === "dark" ? "fas fa-sun" : "fas fa-moon";
+    }
+}
+
+function toggleTheme() {
+    const current = document.documentElement.getAttribute("data-theme") || "light";
+    const next = current === "light" ? "dark" : "light";
+    localStorage.setItem("theme", next);
+    applyTheme(next);
+}
+
 // Tab switching
 function showTab(tab) {
     const loginTab = document.getElementById("loginTab");
@@ -77,7 +110,7 @@ async function login() {
     }
 
     try {
-        const res = await fetch("http://127.0.0.1:8000/login", {
+        const res = await fetch(`${API_BASE}/login`, {
             method: "POST",
             headers: {"Content-Type": "application/json"},
             body: JSON.stringify({username, password})
@@ -109,7 +142,7 @@ async function register() {
     }
 
     try {
-        const res = await fetch("http://127.0.0.1:8000/register", {
+        const res = await fetch(`${API_BASE}/register`, {
             method: "POST",
             headers: {"Content-Type": "application/json"},
             body: JSON.stringify({
@@ -146,11 +179,16 @@ async function loadHistory() {
     if (!token) return;
     
     try {
-        const res = await fetch("http://127.0.0.1:8000/chats/", {
+        const res = await fetch(`${API_BASE}/chats/`, {
             headers: {
                 "Authorization": "Bearer " + token
             }
         });
+
+        if (res.status === 401) {
+            handleAuthFailure();
+            return;
+        }
 
         let chats = await res.json();
         const list = document.getElementById("historyList");
@@ -185,7 +223,7 @@ async function createNewChat() {
     if (!token) return;
     
     try {
-        const res = await fetch("http://127.0.0.1:8000/chats/", {
+        const res = await fetch(`${API_BASE}/chats/`, {
             method: "POST",
             headers: {
                 "Authorization": "Bearer " + token,
@@ -193,6 +231,11 @@ async function createNewChat() {
             },
             body: JSON.stringify({ title: "New Conversation" })
         });
+
+        if (res.status === 401) {
+            handleAuthFailure();
+            return;
+        }
 
         const newChat = await res.json();
         await loadChat(newChat.id);
@@ -219,11 +262,17 @@ async function loadChat(chatId) {
     
     // Load messages from history
     try {
-        const res = await fetch("http://127.0.0.1:8000/chats/", {
+        const res = await fetch(`${API_BASE}/chats/`, {
             headers: {
                 "Authorization": "Bearer " + token
             }
         });
+
+        if (res.status === 401) {
+            handleAuthFailure();
+            return;
+        }
+
         const chats = await res.json();
         const currentChat = chats.find(c => c.id === chatId);
         
@@ -250,7 +299,8 @@ function connectWebSocket() {
     }
 
     console.log("Connecting WebSocket for chat:", currentChatId);
-    socket = new WebSocket(`wss://agnix-backend.onrender.com/ws/${currentChatId}`);
+    const wsProtocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+    socket = new WebSocket(`${wsProtocol}//${window.location.host}/ws/${currentChatId}`);
     
     socket.onopen = function() {
         console.log("WebSocket connected successfully!");
@@ -261,9 +311,22 @@ function connectWebSocket() {
     };
 
     socket.onmessage = function(event) {
-        console.log("Message received:", event.data);
         const data = JSON.parse(event.data);
-        addMessageToChat(data.role, data.content);
+
+        if (data.type === "chunk") {
+            appendStreamChunk(data.content);
+        } else if (data.type === "done") {
+            if (data.content) {
+                appendStreamChunk(data.content);
+            }
+            if (currentStreamDiv) {
+                const span = currentStreamDiv.querySelector(".stream-text");
+                if (span) span.classList.remove("stream-text");
+            }
+            currentStreamDiv = null;
+        } else {
+            addMessageToChat(data.role, data.content);
+        }
     };
     
     socket.onerror = function(error) {
@@ -278,6 +341,27 @@ function connectWebSocket() {
         if (sendBtn) sendBtn.disabled = true;
         if (messageInput) messageInput.disabled = true;
     };
+}
+
+// Append a streaming chunk to the currently-typing assistant bubble
+function appendStreamChunk(text) {
+    const chatBox = document.getElementById("chatBox");
+    if (!chatBox) return;
+
+    if (chatBox.children.length === 1 && chatBox.children[0].classList?.contains('welcome-message')) {
+        chatBox.innerHTML = "";
+    }
+
+    if (!currentStreamDiv) {
+        currentStreamDiv = document.createElement("div");
+        currentStreamDiv.className = "message assistant";
+        currentStreamDiv.innerHTML = `<div class="message-content"><strong>Agnix:</strong><br><span class="stream-text"></span></div>`;
+        chatBox.appendChild(currentStreamDiv);
+    }
+
+    const span = currentStreamDiv.querySelector(".stream-text");
+    span.textContent += text;
+    chatBox.scrollTop = chatBox.scrollHeight;
 }
 
 // Add message to chat

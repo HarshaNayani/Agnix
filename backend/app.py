@@ -12,7 +12,8 @@ from backend import models
 from backend.schemas import Chat as ChatSchema, ChatCreate, MessageCreate, UserLogin, UserCreate, Token
 from backend.crud import *
 from backend.auth import *
-from backend.ai_service import get_ai_response
+from backend.ai_service import get_ai_response, get_ai_response_stream
+import asyncio
 
 # Create tables
 Base.metadata.create_all(bind=engine)
@@ -118,22 +119,43 @@ async def websocket_endpoint(websocket: WebSocket, chat_id: int):
             ]
 
             try:
-                # Get AI response
-                response = get_ai_response(messages)
-                print("AI RESPONSE:", response)
+                # Stream AI response chunk-by-chunk (real token streaming)
+                full_response = ""
+                loop = asyncio.get_event_loop()
+                queue: asyncio.Queue = asyncio.Queue()
 
-                # Send response to frontend
-                await websocket.send_json({
-                    "role": "assistant",
-                    "content": response
-                })
+                def producer():
+                    try:
+                        for chunk in get_ai_response_stream(messages):
+                            loop.call_soon_threadsafe(queue.put_nowait, chunk)
+                    finally:
+                        loop.call_soon_threadsafe(queue.put_nowait, None)
 
-                # Save AI response
-                create_message(db, MessageCreate(role="assistant", content=response), chat_id)
+                executor_future = loop.run_in_executor(None, producer)
+
+                while True:
+                    chunk = await queue.get()
+                    if chunk is None:
+                        break
+                    full_response += chunk
+                    await websocket.send_json({
+                        "type": "chunk",
+                        "role": "assistant",
+                        "content": chunk
+                    })
+
+                await executor_future
+
+                # Let frontend know streaming is complete
+                await websocket.send_json({"type": "done", "role": "assistant"})
+
+                # Save full AI response once streaming is done
+                create_message(db, MessageCreate(role="assistant", content=full_response), chat_id)
 
             except Exception as e:
                 print("🔥 AI ERROR:", repr(e))
                 await websocket.send_json({
+                    "type": "done",
                     "role": "assistant",
                     "content": "⚠️ Error getting response from AI"
                 })
@@ -151,4 +173,3 @@ async def read_index():
     return FileResponse("frontend/templates/index.html")
 
 print("API KEY:", os.getenv("OPENAI_API_KEY"))
-

@@ -4,10 +4,51 @@
     box-sizing: border-box;
 }
 
+:root {
+    --bg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --auth-card-bg: rgba(255, 255, 255, 0.95);
+    --text-primary: #333;
+    --text-secondary: #666;
+    --text-muted: #999;
+    --input-border: #e0e0e0;
+    --tabs-bg: #f0f0f0;
+    --chat-area-bg: #f8f9fa;
+    --chat-header-bg: #ffffff;
+    --chat-header-border: #e0e0e0;
+    --assistant-bubble-bg: #ffffff;
+    --assistant-bubble-border: #e0e0e0;
+    --assistant-bubble-text: #333;
+    --input-wrapper-bg: #f8f9fa;
+    --scrollbar-track: #f1f1f1;
+    --scrollbar-thumb: #888;
+    --scrollbar-thumb-hover: #555;
+}
+
+[data-theme="dark"] {
+    --bg-gradient: linear-gradient(135deg, #232946 0%, #121629 100%);
+    --auth-card-bg: rgba(30, 33, 57, 0.95);
+    --text-primary: #f0f0f5;
+    --text-secondary: #b8bcd4;
+    --text-muted: #7a7f9e;
+    --input-border: #3a3f5c;
+    --tabs-bg: #1e2139;
+    --chat-area-bg: #171a2e;
+    --chat-header-bg: #1e2139;
+    --chat-header-border: #2e3252;
+    --assistant-bubble-bg: #232946;
+    --assistant-bubble-border: #2e3252;
+    --assistant-bubble-text: #f0f0f5;
+    --input-wrapper-bg: #1e2139;
+    --scrollbar-track: #1a1d33;
+    --scrollbar-thumb: #3a3f5c;
+    --scrollbar-thumb-hover: #4a4f6c;
+}
+
 body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: var(--bg-gradient);
     min-height: 100vh;
+    transition: background 0.3s ease;
 }
 
 /* Auth Section */
@@ -20,7 +61,7 @@ body {
 }
 
 .auth-card {
-    background: rgba(255, 255, 255, 0.95);
+    background: var(--auth-card-bg);
     border-radius: 24px;
     padding: 40px;
     width: 100%;
@@ -28,6 +69,7 @@ body {
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
     backdrop-filter: blur(10px);
     animation: slideUp 0.5s ease;
+    transition: background 0.3s ease;
 }
 
 @keyframes slideUp {
@@ -54,12 +96,12 @@ body {
 
 .auth-header h1 {
     font-size: 32px;
-    color: #333;
+    color: var(--text-primary);
     margin-bottom: 8px;
 }
 
 .auth-header p {
-    color: #666;
+    color: var(--text-secondary);
     font-size: 14px;
 }
 
@@ -67,7 +109,7 @@ body {
     display: flex;
     gap: 10px;
     margin-bottom: 30px;
-    background: #f0f0f0;
+    background: var(--tabs-bg);
     padding: 5px;
     border-radius: 12px;
 }
@@ -82,7 +124,7 @@ body {
     font-weight: 600;
     border-radius: 8px;
     transition: all 0.3s ease;
-    color: #666;
+    color: var(--text-secondary);
 }
 
 .tab-btn.active {
@@ -109,10 +151,12 @@ body {
     width: 100%;
     padding: 14px 16px;
     margin-bottom: 16px;
-    border: 2px solid #e0e0e0;
+    border: 2px solid var(--input-border);
     border-radius: 12px;
     font-size: 14px;
     transition: all 0.3s ease;
+    background: var(--auth-card-bg);
+    color: var(--text-primary);
 }
 
 .auth-input:focus {
@@ -286,21 +330,23 @@ body {
     flex: 1;
     display: flex;
     flex-direction: column;
-    background: #f8f9fa;
+    background: var(--chat-area-bg);
+    transition: background 0.3s ease;
 }
 
 .chat-header {
-    background: white;
+    background: var(--chat-header-bg);
     padding: 20px 30px;
-    border-bottom: 1px solid #e0e0e0;
+    border-bottom: 1px solid var(--chat-header-border);
     display: flex;
     justify-content: space-between;
     align-items: center;
+    transition: background 0.3s ease, border-color 0.3s ease;
 }
 
 .chat-header h2 {
     font-size: 20px;
-    color: #333;
+    color: var(--text-primary);
 }
 
 .chat-status {
@@ -308,7 +354,26 @@ body {
     align-items: center;
     gap: 8px;
     font-size: 12px;
-    color: #666;
+    color: var(--text-secondary);
+}
+
+.theme-toggle-btn {
+    background: transparent;
+    border: 1px solid var(--input-border);
+    border-radius: 8px;
+    width: 30px;
+    height: 30px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--text-secondary);
+    transition: all 0.2s ease;
+}
+
+.theme-toggle-btn:hover {
+    background: var(--tabs-bg);
+    transform: rotate(20deg);
 }
 
 .chat-messages {
@@ -323,7 +388,7 @@ body {
 .welcome-message {
     text-align: center;
     padding: 60px 20px;
-    color: #999;
+    color: var(--text-muted);
 }
 
 .welcome-message i {
@@ -358,26 +423,39 @@ body {
 
 .message.assistant {
     align-self: flex-start;
-    background: white;
-    border: 1px solid #e0e0e0;
-    color: #333;
+    background: var(--assistant-bubble-bg);
+    border: 1px solid var(--assistant-bubble-border);
+    color: var(--assistant-bubble-text);
+    transition: background 0.3s ease, border-color 0.3s ease;
 }
 
 .message-content {
     word-wrap: break-word;
 }
 
+.stream-text::after {
+    content: "▍";
+    display: inline-block;
+    margin-left: 2px;
+    animation: blink 1s step-start infinite;
+}
+
+@keyframes blink {
+    50% { opacity: 0; }
+}
+
 .chat-input-container {
     padding: 20px 30px;
-    background: white;
-    border-top: 1px solid #e0e0e0;
+    background: var(--chat-header-bg);
+    border-top: 1px solid var(--chat-header-border);
+    transition: background 0.3s ease, border-color 0.3s ease;
 }
 
 .input-wrapper {
     display: flex;
     gap: 12px;
     align-items: center;
-    background: #f8f9fa;
+    background: var(--input-wrapper-bg);
     border-radius: 16px;
     padding: 8px 16px;
     border: 2px solid transparent;
@@ -386,7 +464,7 @@ body {
 
 .input-wrapper:focus-within {
     border-color: #667eea;
-    background: white;
+    background: var(--chat-header-bg);
 }
 
 #messageInput {
@@ -396,6 +474,7 @@ body {
     background: transparent;
     font-size: 14px;
     outline: none;
+    color: var(--text-primary);
 }
 
 #sendBtn {
@@ -420,7 +499,7 @@ body {
 .input-hint {
     text-align: center;
     font-size: 11px;
-    color: #999;
+    color: var(--text-muted);
     margin-top: 8px;
 }
 
@@ -430,14 +509,14 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-    background: #f1f1f1;
+    background: var(--scrollbar-track);
 }
 
 ::-webkit-scrollbar-thumb {
-    background: #888;
+    background: var(--scrollbar-thumb);
     border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: #555;
+    background: var(--scrollbar-thumb-hover);
 }
