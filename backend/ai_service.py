@@ -17,7 +17,7 @@ else:
     client = Groq(api_key=api_key)
     print("✅ Groq client initialized")
 
-MODEL = "llama-3.3-70b-versatile"
+MODEL = "openai/gpt-oss-120b"  # llama-3.3-70b-versatile was deprecated by Groq in June 2026
 
 SYSTEM_PROMPT = (
     "You are Agnix, a helpful, friendly, and knowledgeable AI assistant. "
