@@ -85,3 +85,18 @@ def get_current_user(
         raise credentials_exception
 
     return user
+
+
+# -------------------------------
+# Verify token for WebSocket (no HTTPException — returns None on failure)
+# -------------------------------
+def get_user_from_token(token: str, db: Session):
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        username: str = payload.get("sub")
+        if username is None:
+            return None
+    except JWTError:
+        return None
+
+    return get_user_by_username(db, username=username)

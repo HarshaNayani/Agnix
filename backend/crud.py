@@ -45,6 +45,9 @@ def get_chats(db: Session, user_id: int, skip: int = 0, limit: int = 100):
         .limit(limit)\
         .all()
 
+def get_chat(db: Session, chat_id: int):
+    return db.query(Chat).filter(Chat.id == chat_id).first()
+
 # Message Functions
 def create_message(db: Session, message: MessageCreate, chat_id: int):
     try:

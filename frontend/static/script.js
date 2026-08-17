@@ -300,7 +300,7 @@ function connectWebSocket() {
 
     console.log("Connecting WebSocket for chat:", currentChatId);
     const wsProtocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-    socket = new WebSocket(`${wsProtocol}//${window.location.host}/ws/${currentChatId}`);
+    socket = new WebSocket(`${wsProtocol}//${window.location.host}/ws/${currentChatId}?token=${encodeURIComponent(token)}`);
     
     socket.onopen = function() {
         console.log("WebSocket connected successfully!");

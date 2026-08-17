@@ -1,4 +1,4 @@
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Depends, HTTPException
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Depends, HTTPException, Query, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, HTMLResponse
@@ -20,10 +20,13 @@ Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Agnix AI Chatbot")
 
-# CORS (for development)
+# CORS — restrict to known frontend origins (override with ALLOWED_ORIGINS env var, comma-separated)
+_default_origins = "https://agnix.onrender.com,http://127.0.0.1:8000,http://localhost:8000"
+allowed_origins = os.getenv("ALLOWED_ORIGINS", _default_origins).split(",")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # restrict in production
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -97,11 +100,29 @@ def read_chats(skip: int = 0, limit: int = 100, current_user=Depends(get_current
 # WebSocket Chat (Streaming AI)
 # -------------------------------
 @app.websocket("/ws/{chat_id}")
-async def websocket_endpoint(websocket: WebSocket, chat_id: int):
-    await websocket.accept()
-    
-    # Create a new database session for this WebSocket connection
+async def websocket_endpoint(websocket: WebSocket, chat_id: int, token: str = Query(None)):
+    # Verify JWT token BEFORE accepting the connection
+    if not token:
+        await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
+        return
+
     db = SessionLocal()
+    user = get_user_from_token(token, db)
+
+    if user is None:
+        db.close()
+        await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
+        return
+
+    # Verify this chat actually belongs to the connecting user
+    chat = get_chat(db, chat_id)
+    if chat is None or chat.user_id != user.id:
+        db.close()
+        await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
+        return
+
+    await websocket.accept()
+    print(f"✅ WebSocket connected for chat_id={chat_id}, user={user.username}")
     
     try:
         while True:
@@ -171,5 +192,3 @@ async def websocket_endpoint(websocket: WebSocket, chat_id: int):
 @app.get("/", response_class=HTMLResponse)
 async def read_index():
     return FileResponse("frontend/templates/index.html")
-
-print("API KEY:", os.getenv("OPENAI_API_KEY"))
