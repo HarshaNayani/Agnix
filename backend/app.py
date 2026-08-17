@@ -55,7 +55,11 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
     db_user = get_user_by_username(db, username=user.username)
     if db_user:
         raise HTTPException(status_code=400, detail="Username already registered")
-    
+
+    db_email = get_user_by_email(db, email=user.email)
+    if db_email:
+        raise HTTPException(status_code=400, detail="Email already registered")
+
     new_user = create_user(db=db, user=user)
     access_token = create_access_token(data={"sub": new_user.username})
     
